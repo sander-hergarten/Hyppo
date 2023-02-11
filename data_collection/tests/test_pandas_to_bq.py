@@ -1,6 +1,6 @@
 from google.cloud import bigquery
-from run_saver import StepSaver
-from pandas_to_bq import BigQueryPandasUploader
+from ..src.run_saver import StepSaver
+from ..src.pandas_to_bq import BigQueryPandasUploader
 from tqdm import tqdm
 from test_run_saver import RandomTrajectoryFactory
 

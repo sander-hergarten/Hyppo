@@ -13,7 +13,7 @@ from uuid import uuid1
 import numpy as np
 
 
-from pandas_to_bq import BigQueryPandasUploader
+from .pandas_to_bq import BigQueryPandasUploader
 
 
 class StepSaver:
