@@ -8,9 +8,9 @@ from tensorflow.keras.layers import Lambda, Resizing
 from tqdm import tqdm
 
 
-from run_saver import StepSaver
+from .run_saver import StepSaver
 
-from procgen_env import ProcgenEnvironment
+from .procgen_env import ProcgenEnvironment
 import argparse
 
 
@@ -38,7 +38,7 @@ from tf_agents.replay_buffers import tf_uniform_replay_buffer
 from tf_agents.utils import common
 from tf_agents.metrics import tf_metrics
 
-from metrics import NormalizedReturn, VideoSaver
+from .metrics import NormalizedReturn, VideoSaver
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--sweep_id", help="increase output verbosity")
