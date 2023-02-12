@@ -7,7 +7,8 @@ train_ds, test_ds = tfds.load(
 
 model = Critic()
 
-model.compile(optimizer="Adam", loss="mse", metrics=["mae"])
+
+model.compile(optimizer="Adam", loss="categorical_crossentropy", metrics=["mae"])
 
 model.fit(train_ds)
 print(model.summary())
