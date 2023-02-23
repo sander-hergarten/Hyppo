@@ -1,7 +1,7 @@
 from tensorflow.keras import layers
 from tensorflow.keras import Model
 
-from .utils import symlog
+from .utils import symexp
 
 
 class RewardPredictor(Model):
@@ -14,7 +14,7 @@ class RewardPredictor(Model):
 
         self.output_layer = layers.Dense("linear", 1)
 
-    def call_no_symlog(self, x):
+    def call_no_symexp(self, x):
         intermediate_result = x
 
         for layer in self.fully_connected_layers:
@@ -25,7 +25,7 @@ class RewardPredictor(Model):
         return output
 
     def call(self, x):
-        return symlog(self.call_no_symlog(x))
+        return symexp(self.call_no_symlog(x))
 
 
 class ContinuePredictor(Model):
