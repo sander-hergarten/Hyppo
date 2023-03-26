@@ -30,9 +30,11 @@ class WorldModel(Model):
         self.training = True
 
         # sequence needs to have dimensions (step, batch_size, step_data)
+        print("data", data)
 
         for step in data:
             print("2")
+            print("step", step)
             image = step["observation"]
             reward = step["reward"]
             continue_flag = step["is_last"]
