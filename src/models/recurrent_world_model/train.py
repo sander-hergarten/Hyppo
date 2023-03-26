@@ -17,19 +17,11 @@ from world_model import WorldModel
 
 def main():
     dataset = tfds.load("rlu_atari", split="train[:5%]")
-    print("hi")
     dataset_batched = batch_dataset(dataset)
 
-    world_model = tf.keras.Sequential(
-        [tf.keras.layers.Dense(10, "relu"), tf.keras.layers.Dense(20, "relu")]
-    )
+    world_model = WorldModel()
 
-    world_model.compile(
-        optimizer=tf.keras.optimizers.Adam(
-            learning_rate=config["model_parameters"]["learning_rate"]
-        )
-    )
-
+    world_model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.1))
     world_model.fit(dataset_batched, epochs=5)
 
 

@@ -10,15 +10,6 @@ DISCOUNTS = config["model_constants"]["loss_discount"]
 
 
 class WorldModel(Model):
-    def __init__(self):
-        super().__init__()
-        self.layer_1 = tf.keras.layers.Dense(10, "relu")
-
-    def call(self, data):
-        return self.layer_1(data)
-
-
-class WorldModel2(Model):
     encoder = Encoder()
     dynamics_predictor = DynamicsPredictor()
     sequence_model = SequenceModel()
