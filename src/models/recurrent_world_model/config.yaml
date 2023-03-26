@@ -1,0 +1,18 @@
+model_sizes:
+  mlp_layer_size: [256]
+  gru_recurrent_units: [256]
+  cnn_kernel: [3, 3, 3, 3]
+  cnn_depth: 24
+
+model_parameters:
+  activation: relu
+  recurrent_state_size: 64
+  cnn_stride: 2
+  learning_rate: 0.99
+
+model_constants:
+  loss_discount: 
+    PRED: 1
+    DYN: 0.5
+    REP: 0.1
+

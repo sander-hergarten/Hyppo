@@ -1,6 +1,6 @@
 import tensorflow as tf
 import tensorflow_probability as tfp
-
+import yaml
 
 symlog = lambda x: tf.sign(x) * tf.math.log(tf.abs(x) + 1)
 symexp = lambda x: tf.sign(x) * (tf.exp(tf.abs(x)) - 1)
@@ -23,13 +23,24 @@ def unimix_categoricals(
 
 
 @tf.function
-def sample_from_distribution(distribution_tensor, one_hot_encode: bool = True):
-    sampler = tfp.distributions.Sample(distribution_tensor)
-
-    if one_hot_encode:
-        shape = tf.shape(distribution_tensor)
-        sample = sampler.sample()
-
-        return tf.one_hot(sample, shape)
+def sample_from_distribution_and_one_hot(distribution_tensor):
+    sampler = tfp.distributions.RelacedOneHotCategorical(
+        logits=distribution_tensor, temperature=0.01
+    )
 
     return sampler.sample()
+
+
+@tf.function
+def symlog_loss(y_true, y_pred):
+    return 0.5 * (y_pred - symlog(y_true)) ** 2
+
+
+with open(
+    "/Users/sanderhergarten/Documents/programming/Hyppo/src/models/recurrent_world_model/config.yaml",
+    "r",
+) as stream:
+    try:
+        config = yaml.safe_load(stream)
+    except yaml.YAMLError as exc:
+        print(exc)
