@@ -31,13 +31,11 @@ class WorldModel(Model):
 
         # sequence needs to have dimensions (step, batch_size, step_data)
         print("data", data)
-        ziped_data = tf.transpose(
-            tf.stack(
-                [data["observation"], data["reward"], data["is_last"], data["action"]]
-            )
+        dataset = tf.data.Dataset.from_tensor_slices(
+            [data["observation"], data["reward"], data["is_last"], data["action"]]
         )
 
-        for image, reward, continue_flag, action in ziped_data:
+        for image, reward, continue_flag, action in dataset.as_numpy_iterator():
             with tf.GradientTape() as tape:
                 self.advance_recurrent_state(action)
                 (
