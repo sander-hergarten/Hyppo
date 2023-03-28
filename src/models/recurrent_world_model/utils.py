@@ -37,7 +37,7 @@ def symlog_loss(y_true, y_pred):
 
 
 with open(
-    "/Users/sanderhergarten/Documents/programming/Hyppo/src/models/recurrent_world_model/config.yaml",
+    "/home/sanderhergarten/Hyppo/src/models/recurrent_world_model/config.yaml",
     "r",
 ) as stream:
     try:
