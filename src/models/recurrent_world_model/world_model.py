@@ -33,10 +33,12 @@ class WorldModel(Model):
         print("data", data)
 
         dataset = tf.data.Dataset.zip(
-            [
-                tf.data.Dataset.from_tensor_slices(data[feature])
-                for feature in ["observation", "reward", "is_last", "action"]
-            ]
+            tuple(
+                [
+                    tf.data.Dataset.from_tensor_slices(data[feature])
+                    for feature in ["observation", "reward", "is_last", "action"]
+                ]
+            )
         )
 
         for image, reward, continue_flag, action in dataset.as_numpy_iterator():
