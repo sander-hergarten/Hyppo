@@ -31,8 +31,12 @@ class WorldModel(Model):
 
         # sequence needs to have dimensions (step, batch_size, step_data)
         print("data", data)
-        dataset = tf.data.Dataset.from_tensor_slices(
-            [data["observation"], data["reward"], data["is_last"], data["action"]]
+
+        dataset = tf.data.Dataset.zip(
+            [
+                tf.data.Dataset.from_tensor_slices(data[feature])
+                for feature in ["observation", "reward", "is_last", "action"]
+            ]
         )
 
         for image, reward, continue_flag, action in dataset.as_numpy_iterator():
