@@ -4,7 +4,7 @@ import tensorflow as tf
 from auxilary_output import ContinuePredictor, Decoder, RewardPredictor
 from sequence_model import DynamicsPredictor, Encoder, SequenceModel
 from tensorflow.keras import Model
-from utils import config, unimix_categoricals
+from utils import config, one_hot, unimix_categoricals
 
 DISCOUNTS = config["model_constants"]["loss_discount"]
 
@@ -44,8 +44,11 @@ class WorldModel(Model):
         dataset_iterator = iter(dataset)
 
         for image, reward, continue_flag, action in dataset_iterator:
+            action = one_hot(action)
+
             with tf.GradientTape() as tape:
                 self.advance_recurrent_state(action)
+
                 (
                     dynamics_loss,
                     representation_loss,

@@ -23,7 +23,7 @@ def unimix_categoricals(
 
 
 @tf.function
-def sample_from_distribution_and_one_hot(distribution_tensor):
+def one_hot(distribution_tensor):
     sampler = tfp.distributions.RelacedOneHotCategorical(
         logits=distribution_tensor, temperature=0.01
     )

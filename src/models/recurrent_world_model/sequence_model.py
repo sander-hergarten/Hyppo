@@ -1,6 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras import Input, Model, layers
-from utils import config, sample_from_distribution_and_one_hot, symexp, symlog
+from utils import config, one_hot, symexp, symlog
 
 
 class Encoder(Model):
@@ -64,9 +64,7 @@ class Encoder(Model):
         return distribution
 
     def sample(self, distribution):
-        categorical_one_hot_vector = tf.map_fn(
-            sample_from_distribution_and_one_hot, distribution
-        )
+        categorical_one_hot_vector = tf.map_fn(one_hot, distribution)
 
         return categorical_one_hot_vector
 
@@ -103,9 +101,7 @@ class DynamicsPredictor(Model):
         return distribution
 
     def sample(self, distribution):
-        categorical_one_hot_vector = tf.map_fn(
-            sample_from_distribution_and_one_hot, distribution
-        )
+        categorical_one_hot_vector = tf.map_fn(one_hot, distribution)
         return categorical_one_hot_vector
 
     def call(self, recurrent_state):
