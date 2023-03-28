@@ -31,8 +31,10 @@ class WorldModel(Model):
 
         # sequence needs to have dimensions (step, batch_size, step_data)
         print("data", data)
-        ziped_data = zip(
-            data["observation"], data["reward"], data["is_last"], data["action"]
+        ziped_data = tf.transpose(
+            tf.stack(
+                [data["observation"], data["reward"], data["is_last"], data["action"]]
+            )
         )
 
         for image, reward, continue_flag, action in ziped_data:
