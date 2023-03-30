@@ -44,7 +44,7 @@ class WorldModel(Model):
         dataset_iterator = iter(dataset)
 
         for image, reward, continue_flag, action in dataset_iterator:
-            action = one_hot(tf.cast(action, tf.float32))
+            action = self.process_action(action)
 
             with tf.GradientTape() as tape:
                 self.advance_recurrent_state(action)
@@ -88,6 +88,13 @@ class WorldModel(Model):
     @property
     def model_state(self):
         return tf.concat([self.recurrent_state, self.stochastic_state], axis=1)
+
+    def process_action(self, p_action):
+        action = tf.cast(p_action, tf.float32)
+        action = tf.stack([action])
+        action = one_hot(action)
+
+        return action
 
     def stochastic_timestep_to_recurrent_timestep(
         self, observation: Optional[Any] = None
