@@ -117,6 +117,7 @@ class SequenceModel(tf.keras.Model):
 
         self.mlp_layer_size = config["model_sizes"]["mlp_layer_size"]
         self.gru_recurrent_units = config["model_sizes"]["gru_recurrent_units"]
+        self.concat_layer = layers.Concatenate()
 
         self.gru_layers = [
             layers.GRU(units, "relu") for units in self.gru_recurrent_units
@@ -129,8 +130,8 @@ class SequenceModel(tf.keras.Model):
         self.output_layer = layers.Dense(self.recurrent_state_size, "sigmoid")
 
     def call(self, previous_recurrent_state, stochastic_latent, action):
-        concatinated_inputs = tf.concat(
-            [previous_recurrent_state, stochastic_latent, action], axis=1
+        concatinated_inputs = self.concat_layer(
+            [previous_recurrent_state, stochastic_latent, action]
         )
 
         intermediate_recurrent = concatinated_inputs
