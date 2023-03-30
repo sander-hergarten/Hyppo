@@ -90,7 +90,7 @@ class WorldModel(Model):
         return tf.concat([self.recurrent_state, self.stochastic_state], axis=1)
 
     def process_action(self, p_action):
-        action = tf.one_hot([p_action], 16)
+        action = tf.one_hot(p_action, 16)
 
         return action
 
