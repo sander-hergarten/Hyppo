@@ -44,7 +44,7 @@ class WorldModel(Model):
         dataset_iterator = iter(dataset)
 
         for image, reward, continue_flag, action in dataset_iterator:
-            action = one_hot(action)
+            action = one_hot(tf.cast(action, tf.float32))
 
             with tf.GradientTape() as tape:
                 self.advance_recurrent_state(action)
