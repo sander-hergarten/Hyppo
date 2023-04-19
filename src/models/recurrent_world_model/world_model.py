@@ -18,7 +18,10 @@ class WorldModel(Model):
     reward_predictor = RewardPredictor()
     decoder = Decoder()
 
-    recurrent_state = {"timestep": 0, "value": tf.zeros((64))}
+    recurrent_state = {
+        "timestep": 0,
+        "value": tf.zeros((config["model_parameters"]["recurrent_state_size"])),
+    }
     stochastic_state = {"timestep": 0, "value": tf.zeros((32 * 32))}
 
     training = False
