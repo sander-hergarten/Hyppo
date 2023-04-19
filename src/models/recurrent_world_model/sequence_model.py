@@ -130,13 +130,13 @@ class SequenceModel(tf.keras.Model):
         self.output_layer = layers.Dense(self.recurrent_state_size, "sigmoid")
 
     def call(self, recurrent_state, stochastic_state, action):
-        print("im in the call", stochastic_state.shape)
-        print(action.shape)
         concatinated_inputs = self.concat_layer([stochastic_state, action])
 
         intermediate_recurrent = concatinated_inputs
 
         state = recurrent_state
+
+        print("state shape", state.shape)
 
         for layer in self.gru_layers:
             intermediate_recurrent, state = layer(intermediate_recurrent, state)
