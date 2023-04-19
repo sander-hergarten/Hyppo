@@ -155,3 +155,5 @@ class WorldModel(Model):
         self.recurrent_state["value"] = self.sequence_model(
             self.recurrent_state["value"], self.stochastic_state["value"], action
         )
+
+        self.recurrent_state["timestep"] += 1
