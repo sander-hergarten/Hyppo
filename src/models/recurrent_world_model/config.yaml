@@ -6,13 +6,12 @@ model_sizes:
 
 model_parameters:
   activation: relu
-  recurrent_state_size: 64
+  recurrent_state_size: 256
   cnn_stride: 2
   learning_rate: 0.99
 
 model_constants:
-  loss_discount: 
+  loss_discount:
     PRED: 1
     DYN: 0.5
     REP: 0.1
-

@@ -26,11 +26,10 @@ class WorldModel(Model):
     kl_divergence = tf.keras.losses.KLDivergence()
 
     def train_step(self, data):
-        print("1")
         self.training = True
 
         # sequence needs to have dimensions (step, batch_size, step_data)
-        print("data", data)
+        tf.print("data", data)
 
         dataset = tf.data.Dataset.zip(
             tuple(
