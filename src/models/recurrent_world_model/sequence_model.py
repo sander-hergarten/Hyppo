@@ -137,8 +137,8 @@ class SequenceModel(tf.keras.Model):
         state = recurrent_state
 
         for layer in self.gru_layers:
-            tf.print("intermediate recurrent", intermediate_recurrent)
-            tf.print("state", state)
+            print("intermediate recurrent", intermediate_recurrent)
+            print("state", state)
 
             intermediate_recurrent, state = layer(intermediate_recurrent, state)
 
