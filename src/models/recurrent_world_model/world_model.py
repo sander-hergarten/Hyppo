@@ -47,9 +47,6 @@ class WorldModel(Model):
 
         for image, reward, continue_flag, action in dataset_iterator:
             action = self.process_action(action)
-            print("action shape", action.shape)
-            print("stochastic state shape", self.stochastic_state["value"].shape)
-            print("stochastic state", self.stochastic_state["value"])
 
             with tf.GradientTape() as tape:
                 self.advance_recurrent_state(action)
