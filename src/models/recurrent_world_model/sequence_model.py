@@ -138,7 +138,8 @@ class SequenceModel(tf.keras.Model):
 
         print("state shape", state.shape)
 
-        for layer in self.gru_layers:
+        for ind, layer in enumerate(self.gru_layers):
+            print(ind)
             intermediate_recurrent, state = layer(intermediate_recurrent, state)
 
         intermediate_dense = intermediate_recurrent
