@@ -132,12 +132,11 @@ class SequenceModel(tf.keras.Model):
     def call(self, recurrent_state, stochastic_state, action):
         concatinated_inputs = self.concat_layer([stochastic_state, action])
 
-        intermediate_recurrent = concatinated_inputs
+        intermediate_recurrent = tf.ones((1, 1040))
 
         state = recurrent_state
 
         for layer in self.gru_layers:
-            print("intermediate recurrent", intermediate_recurrent)
             print("state", state)
 
             intermediate_recurrent, state = layer(intermediate_recurrent, state)
