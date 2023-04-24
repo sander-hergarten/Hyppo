@@ -97,8 +97,9 @@ class WorldModel(Model):
         return action
 
     def stochastic_timestep_to_recurrent_timestep(
-        self, observation: Optional[Any] = None
+        self, p_observation: Optional[Any] = None
     ):
+        observation = tf.stack([p_observation])
         if self.training:
             gradient_distribution_fn = lambda model, *args: unimix_categoricals(
                 model.distribution(*args)
