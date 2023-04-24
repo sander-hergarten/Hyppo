@@ -100,10 +100,6 @@ class WorldModel(Model):
         self, observation: Optional[Any] = None
     ):
         if self.training:
-            assert (
-                observation
-            ), "during training an observation has to be given for stochastic state generation"
-
             gradient_distribution_fn = lambda model, *args: unimix_categoricals(
                 model.distribution(*args)
             )
