@@ -110,18 +110,18 @@ class WorldModel(Model):
             )
 
             encoder_distribution = self.encoder.distribution(
-                self.recurrent_state, observation
+                self.recurrent_state["value"], observation
             )
 
             dynamics_distribution = gradient_distribution_fn(
-                self.dynamics_predictor, self.recurrent_state
+                self.dynamics_predictor, self.recurrent_state["value"]
             )
             encoder_distribution_stop_grad = stop_gradient_distribution_fn(
-                self.encoder, self.recurrent_state
+                self.encoder, self.recurrent_state["value"]
             )
 
             dynamics_distribution_stop_grad = stop_gradient_distribution_fn(
-                self.dynamics_predictor, self.recurrent_state
+                self.dynamics_predictor, self.recurrent_state["value"]
             )
 
             self.stochastic_state["value"] = self.encoder.sample(encoder_distribution)
