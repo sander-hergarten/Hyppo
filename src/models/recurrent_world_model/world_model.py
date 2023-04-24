@@ -137,8 +137,8 @@ class WorldModel(Model):
             )
 
             clipped_losses = (
-                tf.math.maximum(1, dynamics_loss),
-                tf.math.maximum(1, representation_loss),
+                tf.math.maximum(1.0, dynamics_loss),
+                tf.math.maximum(1.0, representation_loss),
             )
 
             return clipped_losses
