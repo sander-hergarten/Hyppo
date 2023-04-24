@@ -79,8 +79,6 @@ class WorldModel(Model):
                 self.encoder,
                 self.dynamics_predictor,
                 self.sequence_model,
-                self.continue_predictor,
-                self.reward_predictor,
             ]:
                 variables = ellement.trainable_variables
                 gradient = tape.gradient(loss, variables)
