@@ -49,6 +49,8 @@ class WorldModel(Model):
             action = self.process_action(action)
 
             with tf.GradientTape() as tape:
+                tape.watch(image)
+                tape.watch(action)
                 self.advance_recurrent_state(action)
 
                 (
@@ -92,6 +94,7 @@ class WorldModel(Model):
 
         return action
 
+    @tf.function
     def stochastic_timestep_to_recurrent_timestep(
         self, p_observation: Optional[Any] = None
     ):
