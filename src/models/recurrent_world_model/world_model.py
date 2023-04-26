@@ -126,7 +126,7 @@ class WorldModel(Model):
             encoder_distribution = unimix_categoricals(encoder_distribution)
 
             dynamics_loss = self.kl_divergence(
-                encoder_distribution_stop_grad, dynamics_distribution
+                tf.ones(dynamics_distribution.shape), dynamics_distribution
             )
             representation_loss = self.kl_divergence(
                 encoder_distribution, dynamics_distribution_stop_grad
