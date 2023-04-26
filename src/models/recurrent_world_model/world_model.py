@@ -76,9 +76,7 @@ class WorldModel(Model):
                 loss = dynamics_loss
 
             for ellement in [
-                self.encoder,
                 self.dynamics_predictor,
-                self.sequence_model,
             ]:
                 variables = ellement.trainable_variables
                 gradient = tape.gradient(loss, variables)
