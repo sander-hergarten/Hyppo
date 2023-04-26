@@ -137,7 +137,7 @@ class WorldModel(Model):
                 tf.math.maximum(1.0, representation_loss),
             )
 
-            return clipped_losses
+            return dynamics_loss, representation_loss
 
         self.stochastic_state["value"] = self.dynamics_predictor(self.recurrent_state)
         self.stochastic_state["timestep"] += 1
