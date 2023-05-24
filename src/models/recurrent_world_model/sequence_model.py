@@ -114,7 +114,7 @@ class DynamicsPredictor(Model):
         return self.sample(distribution)
 
 
-class SequenceModel(tf.keras.Model):
+class SequenceModel_Alpha(tf.keras.Model):
     def __init__(self):
         super().__init__()
         self.recurrent_state_size = config["model_parameters"]["recurrent_state_size"]
@@ -150,4 +150,41 @@ class SequenceModel(tf.keras.Model):
 
         output = self.output_layer(intermediate_dense)
 
-        return output
+        return output, intermediate_recurrent
+
+
+class SequenceModel_Beta(tf.keras.Model):
+    def __init__(self):
+        super().__init__()
+        self.recurrent_state_size = config["model_parameters"]["recurrent_state_size"]
+
+        self.mlp_layer_size = config["model_sizes"]["mlp_layer_size"]
+        self.gru_recurrent_units = config["model_sizes"]["gru_recurrent_units"]
+        self.concat_layer = layers.Concatenate()
+
+        self.gru_layers = [
+            layers.GRUCell(units, "relu") for units in self.gru_recurrent_units
+        ]
+
+        self.mlp_layers = [
+            layers.Dense(layer_size, "relu") for layer_size in self.mlp_layer_size
+        ]
+
+        self.output_layer = layers.Dense(self.recurrent_state_size, "sigmoid")
+
+    def call(self, recurrent_state, stochastic_state):
+        intermediate_recurrent = tf.stack([stochastic_state])
+
+        state = tf.stack([recurrent_state])
+
+        for layer in self.gru_layers:
+            intermediate_recurrent, state = layer(intermediate_recurrent, state)
+
+        intermediate_dense = intermediate_recurrent
+
+        for layer in self.mlp_layers:
+            intermediate_dense = layer(intermediate_dense)
+
+        output = self.output_layer(intermediate_dense)
+
+        return output, intermediate_recurrent
