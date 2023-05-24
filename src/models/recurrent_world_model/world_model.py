@@ -46,11 +46,7 @@ class WorldModel(Model):
             action = self.process_action(action)
 
             with tf.GradientTape(persistent=True) as tape:
-                self.recurrent_state = self.sequence_model(
-                    recurrent_state=self.recurrent_state,
-                    stochastic_state=self.stochastic_state,
-                    action=action,
-                )[0]
+                self.advance_recurrent_state(action)
 
                 stochastic_dist = self.encoder.distribution(
                     self.recurrent_state, observation
@@ -84,9 +80,9 @@ class WorldModel(Model):
                 loss_representation = tf.math.maximum(1.0, loss_representation)
 
                 loss = (
-                    0.5 * loss_dynamics
-                    + 0.1 * loss_representation
-                    + 1 * loss_prediction
+                    DISCOUNTS["DYN"] * loss_dynamics
+                    + DISCOUNTS["REP"] * loss_representation
+                    + DISCOUNTS["PRED"] * loss_prediction
                 )
 
             grad_var_pairs = []
@@ -106,49 +102,56 @@ class WorldModel(Model):
 
             self.optimizer.apply_gradients(grad_var_pairs)
 
-            # with tf.GradientTape() as tape:
-            #     tape.watch(image)
-            #     tape.watch(action)
-            #     self.advance_recurrent_state(action)
-            #
-            #     # (
-            #     #     dynamics_loss,
-            #     #     representation_loss,
-            #     # ) = self.stochastic_timestep_to_recurrent_timestep(image)
-            #     distribution = self.dynamics_predictor.distribution(
-            #         self.recurrent_state["value"]
-            #     )
-            #
-            #     loss = self.kl_divergence(fake_dynamics, distribution)
-            #
-            #     # continue_loss = -tf.math.log(
-            #     #     self.continue_predictor.loss(self.model_state, continue_flag)
-            #     # )
-            #     # reward_loss = -tf.math.log(
-            #     #     self.reward_predictor.loss(self.model_state, reward)
-            #     # )
-            #     # decoder_loss = -tf.math.log(self.decoder.loss(self.model_state, image))
-            #
-            #     # prediction_loss = reward_loss + continue_loss + decoder_loss
-            #
-            #     # loss = (
-            #     #     DISCOUNTS["PRED"] * prediction_loss
-            #     #     + DISCOUNTS["DYN"] * dynamics_loss
-            #     #     + DISCOUNTS["REP"] * representation_loss
-            #     # )
-            #
-            #     loss = dynamics_loss
-            #
-            # variables = self.dynamics_predictor.trainable_variables
-            #
-            # tape.gradient(loss, variables)
-            # # for ellement in [
-            # #     self.dynamics_predictor,
-            # # ]:
-            # #     variables = ellement.trainable_variables
-            # #     gradient = tape.gradient(loss, variables)
-            #
-            # #     self.optimizer.apply_gradients(zip(gradient, variables))
+    def advance_recurrent_state(self, action):
+        self.recurrent_state = self.sequence_model(
+            recurrent_state=self.recurrent_state,
+            stochastic_state=self.stochastic_state,
+            action=action,
+        )[0]
+
+        # with tf.GradientTape() as tape:
+        #     tape.watch(image)
+        #     tape.watch(action)
+        #     self.advance_recurrent_state(action)
+        #
+        #     # (
+        #     #     dynamics_loss,
+        #     #     representation_loss,
+        #     # ) = self.stochastic_timestep_to_recurrent_timestep(image)
+        #     distribution = self.dynamics_predictor.distribution(
+        #         self.recurrent_state["value"]
+        #     )
+        #
+        #     loss = self.kl_divergence(fake_dynamics, distribution)
+        #
+        #     # continue_loss = -tf.math.log(
+        #     #     self.continue_predictor.loss(self.model_state, continue_flag)
+        #     # )
+        #     # reward_loss = -tf.math.log(
+        #     #     self.reward_predictor.loss(self.model_state, reward)
+        #     # )
+        #     # decoder_loss = -tf.math.log(self.decoder.loss(self.model_state, image))
+        #
+        #     # prediction_loss = reward_loss + continue_loss + decoder_loss
+        #
+        #     # loss = (
+        #     #     DISCOUNTS["PRED"] * prediction_loss
+        #     #     + DISCOUNTS["DYN"] * dynamics_loss
+        #     #     + DISCOUNTS["REP"] * representation_loss
+        #     # )
+        #
+        #     loss = dynamics_loss
+        #
+        # variables = self.dynamics_predictor.trainable_variables
+        #
+        # tape.gradient(loss, variables)
+        # # for ellement in [
+        # #     self.dynamics_predictor,
+        # # ]:
+        # #     variables = ellement.trainable_variables
+        # #     gradient = tape.gradient(loss, variables)
+        #
+        # #     self.optimizer.apply_gradients(zip(gradient, variables))
 
     # @property
     # def model_state(self):
