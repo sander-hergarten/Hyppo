@@ -1,8 +1,8 @@
 model_sizes:
   mlp_layer_size: [256]
   gru_recurrent_units: [256]
-  cnn_kernel: [3, 3, 3, 3]
-  cnn_depth: 24
+  cnn_kernel: [2, 2, 2, 2]
+  cnn_depth: 2
 
 model_parameters:
   activation: relu

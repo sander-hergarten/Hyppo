@@ -4,7 +4,7 @@ from tensorflow.keras import Model, layers
 from utils import config, symexp, symlog_loss
 
 
-class RewardPredictor(Model):
+class RewardPredictor(tf.keras.Model):
     def __init__(self):
         super().__init__()
 
@@ -38,7 +38,7 @@ class RewardPredictor(Model):
         return symexp(self.call_no_symlog(x))
 
     @tf.function
-    def loss(self, x, y):
+    def loss_fn(self, x, y):
         y_pred = self.call_no_symexp(x)
 
         return symlog_loss(y, y_pred)
@@ -57,10 +57,10 @@ class ContinuePredictor(Model):
 
         self.output_layer = layers.Dense(1, "sigmoid")
 
-        self.binary_crossentropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
+        self.binary_crossentropy = tf.keras.losses.BinaryCrossentropy()
 
     def call(self, x):
-        intermediate_result = self.input(x)
+        intermediate_result = x
 
         for layer in self.fully_connected_layers:
             intermediate_result = layer(intermediate_result)
@@ -71,8 +71,11 @@ class ContinuePredictor(Model):
         return sampler.sample(1)
 
     @tf.function
-    def loss(self, x, y):
-        y_pred = self(x)
+    def loss_fn(self, x, y):
+        y_pred = self(x)[0]
+
+        y_pred = tf.cast(y_pred, tf.float32)
+
         return self.binary_crossentropy(y, y_pred)
 
 
@@ -99,7 +102,7 @@ class Decoder(Model):
 
         self.cnn_layers = [
             layers.Conv2DTranspose(
-                2**i * cnn_depth,
+                3,
                 kernel,
                 activation=activation,
                 strides=cnn_stride,
@@ -121,12 +124,15 @@ class Decoder(Model):
         for layer in self.cnn_layers:
             encoded_observation = layer(encoded_observation)
 
+        return encoded_observation
+
     def call(self, x):
         return symexp(self.call_no_symexp(x))
 
-    @tf.function
-    def loss(self, x, y):
+    def loss_fn(self, x, y):
         y_pred = self.call_no_symexp(x)
         processed_y = self.resizing_layer(y)
 
-        return symlog_loss(processed_y, y_pred)
+        k = symlog_loss(processed_y, y_pred)
+
+        return k

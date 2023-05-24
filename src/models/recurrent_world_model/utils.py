@@ -1,5 +1,6 @@
 import tensorflow as tf
 import tensorflow_probability as tfp
+import pathlib
 import yaml
 
 symlog = lambda x: tf.sign(x) * tf.math.log(tf.abs(x) + 1)
@@ -36,8 +37,10 @@ def symlog_loss(y_true, y_pred):
     return 0.5 * (y_pred - symlog(y_true)) ** 2
 
 
+config_path = pathlib.Path.cwd() / "config.yaml"
+
 with open(
-    "/home/sanderhergarten/Hyppo/src/models/recurrent_world_model/config.yaml",
+    config_path,
     "r",
 ) as stream:
     try:

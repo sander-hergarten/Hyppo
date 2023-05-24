@@ -32,6 +32,8 @@ class Encoder(Model):
         self.distribution_reshape = layers.Reshape((32, 32), input_shape=(32 * 32,))
         self.resizing_layer = layers.Resizing(64, 64)
 
+        self.flatten_layer = layers.Flatten()
+
     def observation_preprocessing(self, observation):
         processed_observation = self.resizing_layer(observation)
         processed_observation = symlog(processed_observation)
@@ -64,7 +66,9 @@ class Encoder(Model):
         return distribution
 
     def sample(self, distribution):
-        categorical_one_hot_vector = tf.map_fn(one_hot, distribution)
+        categorical_one_hot_vector = self.flatten_layer(
+            tf.map_fn(one_hot, distribution)
+        )
 
         return categorical_one_hot_vector
 
@@ -137,8 +141,6 @@ class SequenceModel(tf.keras.Model):
         state = tf.stack([recurrent_state])
 
         for layer in self.gru_layers:
-            print("state", state)
-
             intermediate_recurrent, state = layer(intermediate_recurrent, state)
 
         intermediate_dense = intermediate_recurrent
