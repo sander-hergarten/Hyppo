@@ -18,15 +18,17 @@ class WorldModel(Model):
     reward_predictor = RewardPredictor()
     decoder = Decoder()
 
-    recurrent_state = (tf.zeros((config["model_parameters"]["recurrent_state_size"])),)
-    stochastic_state = tf.zeros((32 * 32))
-
     training = False
 
     kl_divergence = tf.keras.losses.KLDivergence()
 
     def train_step(self, data):
         self.training = True
+
+        self.recurrent_state = tf.stack(
+            [tf.zeros((config["model_parameters"]["recurrent_state_size"]))]
+        )
+        self.stochastic_state = tf.stack([tf.zeros((32 * 32))])
 
         # sequence needs to have dimensions (step, batch_size, step_data)
         tf.print("data", data)
@@ -110,9 +112,6 @@ class WorldModel(Model):
             stochastic_state=self.stochastic_state,
             action=action,
         )[0]
-
-    def process_action(self, p_action):
-        return action
 
         # with tf.GradientTape() as tape:
         #     tape.watch(image)
