@@ -12,7 +12,7 @@ def batch_dataset(dataset: tf.data.Dataset):
         print("dataset size before concat", batched_dataset.cardinality().numpy())
         print("ellements to concat", element.cardinality().numpy())
 
-        batched_dataset.concatenate(element)
+        batched_dataset = batched_dataset.concatenate(element)
         print("dataset size after concat", batched_dataset.cardinality().numpy())
 
     return batch_list
