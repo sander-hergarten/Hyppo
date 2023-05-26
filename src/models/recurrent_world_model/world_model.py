@@ -157,10 +157,10 @@ class WorldModel(Model):
     # def model_state(self):
     #     return tf.concat([self.recurrent_state, self.stochastic_state], axis=1)
     #
-    # def process_action(self, p_action):
-    #     action = tf.one_hot(p_action, 16)
-    #
-    #     return action
+    def process_action(self, p_action):
+        action = tf.one_hot(p_action, 16)
+        return action
+
     #
     # @tf.function
     # def stochastic_timestep_to_recurrent_timestep(
