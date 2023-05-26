@@ -44,6 +44,7 @@ class WorldModel(Model):
 
         for observation, reward, continue_flag, action in dataset_iterator:
             action = self.process_action(action)
+            observation = tf.stack([observation])
 
             with tf.GradientTape(persistent=True) as tape:
                 self.advance_recurrent_state(action)
@@ -109,6 +110,10 @@ class WorldModel(Model):
             action=action,
         )[0]
 
+    def process_action(self, p_action):
+        action = tf.one_hot(p_action, 16)
+        return action
+
         # with tf.GradientTape() as tape:
         #     tape.watch(image)
         #     tape.watch(action)
@@ -157,9 +162,6 @@ class WorldModel(Model):
     # def model_state(self):
     #     return tf.concat([self.recurrent_state, self.stochastic_state], axis=1)
     #
-    def process_action(self, p_action):
-        action = tf.one_hot(p_action, 16)
-        return action
 
     #
     # @tf.function
