@@ -1,5 +1,3 @@
-from collections import namedtuple
-
 import tensorflow as tf
 
 
@@ -14,12 +12,12 @@ def batch_dataset(dataset: tf.data.Dataset):
 def test(element):
     step_list = []
     for dictionary in element:
-        zip_with_some_help = lambda tensor: tf.reduce_sum(tensor)
-
-        c = tf.stack(list(dictionary.values()), axis=1)
-        ziped_dict = tf.map_fn(zip_with_some_help, c, dtype=tf.float32)
-
-        step_list.extend([dict(zip(dictionary, t)) for t in ziped_dict])
+        step_list.extend(
+            [
+                dict(zip(dictionary, t))
+                for t in zip(*[x.numpy() for x in dictionary.values()])
+            ]
+        )
 
     return step_list
 
