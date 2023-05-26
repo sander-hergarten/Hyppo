@@ -3,12 +3,22 @@ model_sizes:
   gru_recurrent_units: [256]
   cnn_kernel: [2, 2, 2, 2]
   cnn_depth: 2
+  action_predictor_units: [256]
 
 model_parameters:
   activation: relu
   recurrent_state_size: 256
   cnn_stride: 2
   learning_rate: 0.99
+
+  # epsilon decay parameters
+  epsilon: 1.0
+  epsilon_decay: 0.01
+  epsilon_min: 0.1 
+
+  # reward discount rate
+  gamma: 0.8
+
 
 model_constants:
   loss_discount:

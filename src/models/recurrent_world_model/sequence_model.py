@@ -153,38 +153,55 @@ class SequenceModel_Alpha(tf.keras.Model):
         return output, intermediate_recurrent
 
 
-class SequenceModel_Beta(tf.keras.Model):
+class SequenceModel_Beta:
     def __init__(self):
-        super().__init__()
-        self.recurrent_state_size = config["model_parameters"]["recurrent_state_size"]
+        self.model = self.create_model()
+        self.target_model = self.create_model()
 
-        self.mlp_layer_size = config["model_sizes"]["mlp_layer_size"]
-        self.gru_recurrent_units = config["model_sizes"]["gru_recurrent_units"]
-        self.concat_layer = layers.Concatenate()
+    def __call__(self, recurrent_state, stochastic_state):
+        return self.model(recurrent_state, stochastic_state)
 
-        self.gru_layers = [
-            layers.GRUCell(units, "relu") for units in self.gru_recurrent_units
-        ]
+    def target_model(self, recurrent_state, stochastic_state):
+        return self.target_model(recurrent_state, stochastic_state)
 
-        self.mlp_layers = [
-            layers.Dense(layer_size, "relu") for layer_size in self.mlp_layer_size
-        ]
+    def create_model(self):
+        class SequenceModelNoAction(tf.keras.Model):
+            def __init__(self):
+                super().__init__()
+                self.recurrent_state_size = config["model_parameters"][
+                    "recurrent_state_size"
+                ]
 
-        self.output_layer = layers.Dense(self.recurrent_state_size, "sigmoid")
+                self.mlp_layer_size = config["model_sizes"]["mlp_layer_size"]
+                self.gru_recurrent_units = config["model_sizes"]["gru_recurrent_units"]
+                self.concat_layer = layers.Concatenate()
 
-    def call(self, recurrent_state, stochastic_state):
-        intermediate_recurrent = tf.stack([stochastic_state])
+                self.gru_layers = [
+                    layers.GRUCell(units, "relu") for units in self.gru_recurrent_units
+                ]
 
-        state = tf.stack([recurrent_state])
+                self.mlp_layers = [
+                    layers.Dense(layer_size, "relu")
+                    for layer_size in self.mlp_layer_size
+                ]
 
-        for layer in self.gru_layers:
-            intermediate_recurrent, state = layer(intermediate_recurrent, state)
+                self.output_layer = layers.Dense(self.recurrent_state_size, "sigmoid")
 
-        intermediate_dense = intermediate_recurrent
+            def call(self, recurrent_state, stochastic_state):
+                intermediate_recurrent = tf.stack([stochastic_state])
 
-        for layer in self.mlp_layers:
-            intermediate_dense = layer(intermediate_dense)
+                state = tf.stack([recurrent_state])
 
-        output = self.output_layer(intermediate_dense)
+                for layer in self.gru_layers:
+                    intermediate_recurrent, state = layer(intermediate_recurrent, state)
 
-        return output, intermediate_recurrent
+                intermediate_dense = intermediate_recurrent
+
+                for layer in self.mlp_layers:
+                    intermediate_dense = layer(intermediate_dense)
+
+                output = self.output_layer(intermediate_dense)
+
+                return output, intermediate_recurrent
+
+        return SequenceModelNoAction()
