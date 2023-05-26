@@ -33,17 +33,9 @@ class WorldModel(Model):
         # sequence needs to have dimensions (step, batch_size, step_data)
         tf.print("data", data)
 
-        dataset = tf.data.Dataset.zip(
-            tuple(
-                [
-                    tf.data.Dataset.from_tensor_slices(data[feature])
-                    for feature in ["observation", "reward", "is_last", "action"]
-                ]
-            )
-        )
-
         dataset_iterator = iter(dataset)
 
+        grad_var_pairs = []
         for observation, reward, continue_flag, action in dataset_iterator:
             observation = tf.stack([observation])
 
@@ -89,21 +81,19 @@ class WorldModel(Model):
                     + DISCOUNTS["PRED"] * loss_prediction
                 )
 
-            grad_var_pairs = []
+        for model in [
+            self.dynamics_predictor,
+            self.encoder,
+            self.sequence_model,
+            self.decoder,
+            self.reward_predictor,
+        ]:
+            variables = model.trainable_variables
+            grads = tape.gradient(loss, variables)
 
-            for model in [
-                self.dynamics_predictor,
-                self.encoder,
-                self.sequence_model,
-                self.decoder,
-                self.reward_predictor,
-            ]:
-                variables = model.trainable_variables
-                grads = tape.gradient(loss, variables)
+            grad_var_pairs.extend(list(zip(grads, variables)))
 
-                grad_var_pairs.extend(list(zip(grads, variables)))
-
-            self.optimizer.apply_gradients(grad_var_pairs)
+        self.optimizer.apply_gradients(grad_var_pairs)
 
     def advance_recurrent_state(self, action):
         self.recurrent_state = self.sequence_model(

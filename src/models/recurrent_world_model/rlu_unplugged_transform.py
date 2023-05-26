@@ -1,3 +1,6 @@
+from collections import namedtuple
+
+import pandas as pd
 import tensorflow as tf
 
 
@@ -6,13 +9,15 @@ def batch_dataset(dataset: tf.data.Dataset):
 
     batched_dataset = batch_list.pop(0)
 
-    print(batched_dataset.cardinality().numpy())
-
+    data = []
     for element in batch_list:
-        print("dataset size before concat", batched_dataset.cardinality().numpy())
-        print("ellements to concat", element.cardinality().numpy())
+        step_list = []
+        for dictionary in element:
+            step_list.extend(
+                [dict(zip(dictionary, t)) for t in zip(*dictionary.values())]
+            )
+        data.append({"sequence": step_list})
 
-        batched_dataset = batched_dataset.concatenate(element)
-        print("dataset size after concat", batched_dataset.cardinality().numpy())
+    dataset = tf.data.Dataset.from_tensor_slices(data)
 
-    return batch_list
+    return dataset
