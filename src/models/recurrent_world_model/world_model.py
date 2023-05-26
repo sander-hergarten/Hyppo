@@ -67,12 +67,14 @@ class WorldModel(Model):
                     [self.recurrent_state, self.stochastic_state], axis=1
                 )
 
-                loss_decoder = -tf.math.log(decoder.loss_fn(model_state, observation))
+                loss_decoder = -tf.math.log(
+                    self.decoder.loss_fn(model_state, observation)
+                )
                 loss_reward = -tf.math.log(
-                    reward_predictor.loss_fn(model_state, reward)
+                    self.reward_predictor.loss_fn(model_state, reward)
                 )
                 loss_continue = -tf.math.log(
-                    continue_predictor.loss_fn(model_state, continue_flag)
+                    self.continue_predictor.loss_fn(model_state, continue_flag)
                 )
 
                 loss_prediction = loss_decoder + loss_reward + loss_continue
