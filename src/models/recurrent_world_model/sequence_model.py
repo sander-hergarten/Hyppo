@@ -139,6 +139,7 @@ class SequenceModel(tf.keras.Model):
 
     def call(self, recurrent_state, stochastic_state, action):
         one_hot_action = self.one_hot_layer(action)
+        one_hot_action = tf.stack(one_hot_action)
         concatinated_inputs = self.concat_layer([stochastic_state, one_hot_action])
 
         intermediate_recurrent = tf.stack([concatinated_inputs])
