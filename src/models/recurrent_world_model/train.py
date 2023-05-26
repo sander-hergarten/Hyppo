@@ -31,7 +31,7 @@ def main():
     dataset = tfds.load("rlu_atari", split="train[:5%]")
     dataset_batched = batch_dataset(dataset)
 
-    print(dataset_batched.cardinality().numpy())
+    print(len(dataset_batched))
     # world_model = WorldModel()
     #
     # world_model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.1))
