@@ -4,19 +4,19 @@ import tensorflow as tf
 
 
 def batch_dataset(dataset: tf.data.Dataset):
-    batch_list = [element["steps"].batch(50) for element in dataset]
+    batched_dataset = dataset.map(batcher)
+    batched_dataset = batched_dataset.map(test)
 
-    batched_dataset = batch_list.pop(0)
+    return batched_dataset
 
-    data = []
-    for element in batch_list:
-        step_list = []
-        for dictionary in element:
-            step_list.extend(
-                [dict(zip(dictionary, t)) for t in zip(*dictionary.values())]
-            )
-        data.append({"sequence": step_list})
 
-    dataset = tf.data.Dataset.from_tensor_slices(data)
+def test(element):
+    step_list = []
+    for dictionary in element:
+        step_list.extend([dict(zip(dictionary, t)) for t in zip(*dictionary.values())])
 
-    return dataset
+    return step_list
+
+
+def batcher(element):
+    return element["steps"].batch(50)
