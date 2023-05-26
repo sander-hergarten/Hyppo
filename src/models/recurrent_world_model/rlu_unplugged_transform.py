@@ -10,6 +10,7 @@ def batch_dataset(dataset: tf.data.Dataset):
     return batched_dataset
 
 
+@tf.function
 def test(element):
     step_list = []
     for dictionary in element:
@@ -18,5 +19,6 @@ def test(element):
     return step_list
 
 
+@tf.function
 def batcher(element):
     return element["steps"].batch(50)
