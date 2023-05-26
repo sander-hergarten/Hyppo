@@ -16,7 +16,7 @@ def test(element):
     for dictionary in element:
         zip_with_some_help = lambda tensor: tf.reduce_sum(tensor)
 
-        c = tf.stack(dictionary.values(), axis=1)
+        c = tf.stack(list(dictionary.values()), axis=1)
         ziped_dict = tf.map_fn(zip_with_some_help, c, dtype=tf.float32)
 
         step_list.extend([dict(zip(dictionary, t)) for t in ziped_dict])
