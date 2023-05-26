@@ -43,7 +43,6 @@ class WorldModel(Model):
         dataset_iterator = iter(dataset)
 
         for observation, reward, continue_flag, action in dataset_iterator:
-            action = self.process_action(action)
             observation = tf.stack([observation])
 
             with tf.GradientTape(persistent=True) as tape:
@@ -113,8 +112,6 @@ class WorldModel(Model):
         )[0]
 
     def process_action(self, p_action):
-        action = tf.one_hot(p_action, 16)
-        action = tf.stack([action])
         return action
 
         # with tf.GradientTape() as tape:
