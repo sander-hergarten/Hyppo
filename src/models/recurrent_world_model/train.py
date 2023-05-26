@@ -32,6 +32,7 @@ def main():
     dataset_batched = batch_dataset(dataset)
 
     print(len(dataset_batched))
+    print(dataset.cardinality().numpy())
     # world_model = WorldModel()
     #
     # world_model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.1))
