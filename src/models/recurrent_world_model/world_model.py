@@ -97,7 +97,6 @@ class WorldModel(Model):
                 self.sequence_model,
                 self.decoder,
                 self.reward_predictor,
-                self.continue_predictor,
             ]:
                 variables = model.trainable_variables
                 grads = tape.gradient(loss, variables)

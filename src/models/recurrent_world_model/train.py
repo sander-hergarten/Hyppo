@@ -22,7 +22,7 @@ def main():
     world_model = WorldModel()
 
     world_model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.1))
-    world_model.fit(dataset_batched, epochs=5)
+    world_model.fit(dataset_batched, epochs=5, verbose=1)
 
 
 if __name__ == "__main__":
