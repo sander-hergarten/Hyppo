@@ -114,6 +114,7 @@ class WorldModel(Model):
 
     def process_action(self, p_action):
         action = tf.one_hot(p_action, 16)
+        action = tf.stack([action])
         return action
 
         # with tf.GradientTape() as tape:
