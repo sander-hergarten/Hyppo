@@ -51,157 +51,210 @@ def generate_action(recurrent_state, stochastic_state, observation):
 
     action = action_predictor.model(model_state_t1)
 
+def training_routine_base(sample) -> list:
+    recurrent_state = tf.zeros((1, 256))
+    stochastic_state = tf.zeros((1, 1024))  
+    
+    grad_var_pairs = []
 
-with tf.GradientTape(persistent=True) as tape:
-    recurrent_state_alpha, gru_output_alpha = sequence_model_alpha(
-        recurrent_state=recurrent_state,
-        stochastic_state=stochastic_state,
-        action=action,
-    )
+    for step in sample:
+        action, reward, observation, continue_flag = step
 
-    recurrent_state_alpha = recurrent_state_alpha[0]
+        with tf.GradientTape(persistent=True) as tape:
+            recurrent_state_alpha, gru_output_alpha = sequence_model_alpha(
+                recurrent_state=recurrent_state,
+                stochastic_state=stochastic_state,
+                action=action,
+            )
 
-    stochastic_dist_alpha = encoder.distribution(recurrent_state_alpha, observation)
-    dynamics_dist_alpha = dynamics_predictor.distribution(recurrent_state_alpha)
+            recurrent_state_alpha = recurrent_state_alpha[0]
 
-    loss_dynamics_alpha = kl_divergence(
-        tf.stop_gradient(stochastic_dist_alpha), dynamics_dist_alpha
-    )
-    loss_representation_alpha = kl_divergence(
-        tf.stop_gradient(dynamics_dist_alpha), stochastic_dist_alpha
-    )
+            stochastic_dist_alpha = encoder.distribution(recurrent_state_alpha, observation)
+            dynamics_dist_alpha = dynamics_predictor.distribution(recurrent_state_alpha)
 
-    loss_beta = 0
+            loss_dynamics_alpha = kl_divergence(
+                tf.stop_gradient(stochastic_dist_alpha), dynamics_dist_alpha
+            )
+            loss_representation_alpha = kl_divergence(
+                tf.stop_gradient(dynamics_dist_alpha), stochastic_dist_alpha
+            )
 
-    if reward > REWARD_THRESHOLD:
-        recurrent_state_beta, gru_output_beta = sequence_model_beta.model(
-            recurrent_state=recurrent_state,
-            stochastic_state=stochastic_state,
-        )
+            stochastic_state_alpha = encoder.sample(stochastic_dist_alpha)
 
-        stochastic_dist_beta = encoder.distribution(recurrent_state_beta, observation)
-        dynamics_dist_beta = dynamics_predictor.distribution(recurrent_state_beta)
+            model_state_alpha = tf.concat(
+                [recurrent_state_alpha, stochastic_state_alpha], axis=1
+            )
 
-        stochastic_state_beta = encoder.sample(stochastic_dist_beta)
-        model_state_beta = tf.concat(
-            [recurrent_state_beta, stochastic_state_beta], axis=1
-        )
+            loss_decoder_alpha = -tf.math.log(decoder.loss_fn(model_state_alpha, observation))
+            loss_reward_alpha = -tf.math.log(
+                reward_predictor.loss_fn(model_state_alpha, reward)
+            )
+            loss_continue_alpha = -tf.math.log(
+                continue_predictor.loss_fn(model_state_alpha, continue_flag)
+            )
 
-        loss_decoder_beta = -tf.math.log(decoder.loss_fn(model_state_beta, observation))
+            loss_prediction_alpha = loss_decoder_alpha + loss_reward_alpha + loss_continue_alpha
 
-        loss_continue_beta = -tf.math.log(
-            continue_predictor.loss_fn(model_state_beta, continue_flag)
-        )
+            loss_dynamics_alpha = tf.math.maximum(1.0, loss_dynamics_alpha)
 
-        loss_prediction_beta = loss_decoder_beta + loss_continue_beta
+            loss_alpha = (
+                0.5 * loss_dynamics_alpha
+                + 0.1 * loss_representation_alpha
+                + 1 * loss_prediction_alpha
+            )
 
-        loss_dynamics_beta = kl_divergence(dynamics_dist_beta, dynamics_dist_alpha)
-        loss_stochastic_beta = kl_divergence(
-            stochastic_dist_beta, stochastic_dist_alpha
-        )
+            recurrent_state = recurrent_state_alpha
+            stochastic_state = stochastic_state_alpha
 
-        loss_sequence_model_beta = kl_divergence(
-            tf.stop_gradient(gru_output_alpha), gru_output_beta
-        )
+        for model in [
+            dynamics_predictor,
+            encoder,
+            sequence_model_alpha,
+            decoder,
+            reward_predictor,
+            continue_predictor,
+        ]:
+            variables = model.trainable_variables
+            grads = tape.gradient(loss_alpha, variables)
 
-        loss_beta = (
-            loss_prediction_beta
-            + loss_dynamics_beta
-            + loss_stochastic_beta
-            + loss_sequence_model_beta
-        )
+            grad_var_pairs.extend(list(zip(grads, variables)))
 
-    else:
-        step_count += 1
 
-        action, recurrent_state_beta_t1, stochastic_state_beta_t1 = generate_action(
-            recurrent_state, stochastic_state, observation
-        )
+    return grad_var_pairs
 
-        # TODO: think about this
-        action_recurrent_state_t1 = sequence_model_alpha(
+def training_routine_high_episode_return(sample) -> list:
+    recurrent_state = tf.zeros((1, 256))
+    stochastic_state = tf.zeros((1, 1024))
+    
+    grad_var_pairs = [] 
+
+    for step in sample:
+        action, _, observation, continue_flag = step
+
+        recurrent_state_alpha, gru_output_alpha = sequence_model_alpha(
             recurrent_state=recurrent_state,
             stochastic_state=stochastic_state,
             action=action,
         )
-        state = tf.concat([recurrent_state, stochastic_state], axis=1)
-        state_t1 = tf.concat(
-            [action_recurrent_state_t1, stochastic_state_beta_t1], axis=1
-        )
 
-        reward_t1 = reward_predictor(state_t1)
-        continue_flag_t1 = continue_predictor(state_t1)
-
-        step_tuple = (state, action, reward_t1, state_t1, continue_flag_t1)
-
-        replay_buffer.add(step_tuple)
-
-    stochastic_state_alpha = encoder.sample(stochastic_dist_alpha)
-
-    model_state_alpha = tf.concat(
-        [recurrent_state_alpha, stochastic_state_alpha], axis=1
-    )
-
-    loss_decoder_alpha = -tf.math.log(decoder.loss_fn(model_state_alpha, observation))
-    loss_reward_alpha = -tf.math.log(
-        reward_predictor.loss_fn(model_state_alpha, reward)
-    )
-    loss_continue_alpha = -tf.math.log(
-        continue_predictor.loss_fn(model_state_alpha, continue_flag)
-    )
-
-    loss_prediction_alpha = loss_decoder_alpha + loss_reward_alpha + loss_continue_alpha
-
-    loss_dynamics_alpha = tf.math.maximum(1.0, loss_dynamics_alpha)
-    loss_representation = tf.math.maximum(1.0, loss_representation_alpha)
-
-    loss_alpha = (
-        0.5 * loss_dynamics_alpha
-        + 0.1 * loss_representation_alpha
-        + 1 * loss_prediction_alpha
-    )
-
-    recurrent_state = recurrent_state_alpha
-    stochastic_state = stochastic_state_alpha
+        with tf.GradientTape(persistent=True) as tape:
+            stochastic_dist_alpha = encoder.distribution(recurrent_state_alpha, observation)           
+            dynamics_dist_alpha= dynamics_predictor.distribution(recurrent_state_alpha)
 
 
-grad_var_pairs = []
+            recurrent_state_beta, gru_output_beta = sequence_model_beta.model(
+                recurrent_state=recurrent_state,
+                stochastic_state=stochastic_state,
+            )
+            
 
+            stochastic_dist_beta = encoder.distribution(recurrent_state_beta, observation)
+            dynamics_dist_beta = dynamics_predictor.distribution(recurrent_state_beta)
 
-for model in [
-    dynamics_predictor,
-    encoder,
-    sequence_model_alpha,
-    decoder,
-    reward_predictor,
-    continue_predictor,
-]:
-    variables = model.trainable_variables
-    grads = tape.gradient(loss_alpha, variables)
+            stochastic_state_beta = encoder.sample(stochastic_dist_beta)
+            model_state_beta = tf.concat(
+                [recurrent_state_beta, stochastic_state_beta], axis=1
+            )
 
-    grad_var_pairs.extend(list(zip(grads, variables)))
+            loss_decoder_beta = -tf.math.log(decoder.loss_fn(model_state_beta, observation))
 
-if not isinstance(loss_beta, int):
-    for model in [
-        encoder,
-        decoder,
-        continue_predictor,
-        dynamics_predictor,
-    ]:
-        variables = model.trainable_variables
+            loss_continue_beta = -tf.math.log(
+                continue_predictor.loss_fn(model_state_beta, continue_flag)
+            )
+
+            loss_prediction_beta = loss_decoder_beta + loss_continue_beta
+
+            loss_dynamics_beta = kl_divergence(dynamics_dist_beta, dynamics_dist_alpha)
+            loss_representation_beta = kl_divergence(
+                stochastic_dist_beta, stochastic_dist_alpha
+            )
+
+            loss_sequence_model_beta = kl_divergence(
+                tf.stop_gradient(gru_output_alpha), gru_output_beta
+            )
+
+            loss_beta = (
+                loss_prediction_beta
+                + loss_dynamics_beta
+                + loss_representation_beta
+                + loss_sequence_model_beta
+            )
+            
+        for model in [
+            encoder,
+            decoder,
+            continue_predictor,
+            dynamics_predictor,
+        ]:
+            variables = model.trainable_variables
+            grads = tape.gradient(loss_beta, variables)
+
+            grad_var_pairs.extend(list(zip(grads, variables)))
+
+        variables = sequence_model_beta.model.trainable_variables
         grads = tape.gradient(loss_beta, variables)
 
         grad_var_pairs.extend(list(zip(grads, variables)))
 
-    variables = sequence_model_beta.model.trainable_variables
-    grads = tape.gradient(loss_beta, variables)
+    return grad_var_pairs
 
-    grad_var_pairs.extend(list(zip(grads, variables)))
-
-# Config parameter for this
-if len(replay_buffer) > 200: 
-
+def training_routine_low_episode_return(sample) -> list:
+    recurrent_state = tf.zeros((1, 256))
+    stochastic_state = tf.zeros((1, 1024))
     
+    grad_var_pairs = []
+    
+    for step in sample:
+        action, _, observation, continue_flag = step
+
+        recurrent_state_alpha, _ = sequence_model_alpha(
+            recurrent_state=recurrent_state,
+            stochastic_state=stochastic_state,
+            action=action,
+        )
+
+        stochastic_state_alpha = encoder(recurrent_state_alpha, observation)
+
+        with tf.GradientTape(persistent=True) as tape:
+            action = action_predictor.model(recurrent_state_alpha, stochastic_state_alpha)
+
+
+            
+        
+
+
+            
 
 
 optimizer.apply_gradients(grad_var_pairs)
+
+        if not isinstance(loss_beta, int):
+            
+
+
+
+            if reward > REWARD_THRESHOLD:
+            else:
+                step_count += 1
+
+                action, recurrent_state_beta_t1, stochastic_state_beta_t1 = generate_action(
+                    recurrent_state, stochastic_state, observation
+                )
+
+                # TODO: think about this
+                action_recurrent_state_t1 = sequence_model_alpha(
+                    recurrent_state=recurrent_state,
+                    stochastic_state=stochastic_state,
+                    action=action,
+                )
+                state = tf.concat([recurrent_state, stochastic_state], axis=1)
+                state_t1 = tf.concat(
+                    [action_recurrent_state_t1, stochastic_state_beta_t1], axis=1
+                )
+
+                reward_t1 = reward_predictor(state_t1)
+                continue_flag_t1 = continue_predictor(state_t1)
+
+                step_tuple = (state, action, reward_t1, state_t1, continue_flag_t1)
+
+                replay_buffer.add(step_tuple)
