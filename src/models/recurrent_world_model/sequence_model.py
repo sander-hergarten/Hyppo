@@ -1,6 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras import Input, Model, layers
-from utils import config, sample_from_distribution_and_one_hot, symexp, symlog
+from utils import config, one_hot, symexp, symlog
 
 
 class Encoder(Model):
@@ -31,6 +31,8 @@ class Encoder(Model):
 
         self.distribution_reshape = layers.Reshape((32, 32), input_shape=(32 * 32,))
         self.resizing_layer = layers.Resizing(64, 64)
+
+        self.flatten_layer = layers.Flatten()
 
     def observation_preprocessing(self, observation):
         processed_observation = self.resizing_layer(observation)
@@ -64,8 +66,8 @@ class Encoder(Model):
         return distribution
 
     def sample(self, distribution):
-        categorical_one_hot_vector = tf.map_fn(
-            sample_from_distribution_and_one_hot, distribution
+        categorical_one_hot_vector = self.flatten_layer(
+            tf.map_fn(one_hot, distribution)
         )
 
         return categorical_one_hot_vector
@@ -103,9 +105,7 @@ class DynamicsPredictor(Model):
         return distribution
 
     def sample(self, distribution):
-        categorical_one_hot_vector = tf.map_fn(
-            sample_from_distribution_and_one_hot, distribution
-        )
+        categorical_one_hot_vector = tf.map_fn(one_hot, distribution)
         return categorical_one_hot_vector
 
     def call(self, recurrent_state):
@@ -119,11 +119,16 @@ class SequenceModel(tf.keras.Model):
         super().__init__()
         self.recurrent_state_size = config["model_parameters"]["recurrent_state_size"]
 
+        self.one_hot_layer = tf.keras.layers.CategoryEncoding(
+            num_tokens=16, output_mode="one_hot"
+        )
+
         self.mlp_layer_size = config["model_sizes"]["mlp_layer_size"]
         self.gru_recurrent_units = config["model_sizes"]["gru_recurrent_units"]
+        self.concat_layer = layers.Concatenate()
 
         self.gru_layers = [
-            layers.GRU(units, "relu") for units in self.gru_recurrent_units
+            layers.GRUCell(units, "relu") for units in self.gru_recurrent_units
         ]
 
         self.mlp_layers = [
@@ -132,15 +137,18 @@ class SequenceModel(tf.keras.Model):
 
         self.output_layer = layers.Dense(self.recurrent_state_size, "sigmoid")
 
-    def call(self, previous_recurrent_state, stochastic_latent, action):
-        concatinated_inputs = tf.concat(
-            [previous_recurrent_state, stochastic_latent, action], axis=1
-        )
+    def call(self, recurrent_state, stochastic_state, action):
+        one_hot_action = self.one_hot_layer(action)
+        one_hot_action = tf.stack([one_hot_action])
 
-        intermediate_recurrent = concatinated_inputs
+        concatinated_inputs = self.concat_layer([stochastic_state, one_hot_action])
+
+        intermediate_recurrent = tf.stack([concatinated_inputs])
+
+        state = tf.stack([recurrent_state])
 
         for layer in self.gru_layers:
-            intermediate_recurrent = layer(intermediate_recurrent)
+            intermediate_recurrent, state = layer(intermediate_recurrent, state)
 
         intermediate_dense = intermediate_recurrent
 

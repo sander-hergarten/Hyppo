@@ -2,10 +2,26 @@ import tensorflow as tf
 
 
 def batch_dataset(dataset: tf.data.Dataset):
-    batch_list = [element["steps"].batch(50) for element in dataset]
-    batched_dataset = batch_list.pop(0)
-
-    for batch in batch_list:
-        batched_dataset = batched_dataset.concatenate(batch)
+    batched_dataset = dataset.map(batcher)
+    batched_dataset = batched_dataset.map(test)
 
     return batched_dataset
+
+
+@tf.function
+def test(element):
+    step_list = []
+    for dictionary in element:
+        step_list.extend(
+            [
+                dict(zip(dictionary, t))
+                for t in zip(*[x.numpy() for x in dictionary.values()])
+            ]
+        )
+
+    return step_list
+
+
+@tf.function
+def batcher(element):
+    return element["steps"].batch(50)
